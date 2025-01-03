@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1735886953646,
+      "tag": "0000_yielding_the_enforcers",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1735891120316,
+      "tag": "0001_slimy_rockslide",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1735893370184,
+      "tag": "0002_productive_starhawk",
+      "breakpoints": true
+    }
+  ]
+}
