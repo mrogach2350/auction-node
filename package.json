@@ -11,6 +11,7 @@
     "migrate": "bunx drizzle-kit migrate"
   },
   "dependencies": {
+    "bull": "^4.16.5",
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.3",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/bull": "^4.10.4",
     "@types/node": "^20",
     "@types/pg": "^8.11.10",
     "@types/react": "^19",
