@@ -1,8 +1,13 @@
 import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import * as schema from "./schema";
 const db = drizzle(process.env.DATABASE_URL!);
+
+if (process.env.MIGRATE === "true") {
+  void migrate(db, { migrationsFolder: "./drizzle" });
+}
 
 export const createVehicle = async (vehicle: any) => {
   await db
