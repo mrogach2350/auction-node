@@ -1,7 +1,13 @@
 import "dotenv/config";
-import * as schema from "./schema";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import * as schema from "./schema";
 const db = drizzle(process.env.DATABASE_URL!);
+
+if (process.env.MIGRATE === "true") {
+  void migrate(db, { migrationsFolder: "./drizzle" });
+}
 
 export const createVehicle = async (vehicle: any) => {
   await db
@@ -25,4 +31,28 @@ export const upsertAuction = async (auction: any) => {
       target: schema.auctions.id,
       set: { ...auction },
     });
+};
+
+export const createOffer = async (offer: any) => {
+  await db.insert(schema.offers).values(offer);
+};
+
+export const getAllVehicles = async () => {
+  return await db.select().from(schema.vehicles);
+};
+
+export const getVehicleById = async (id: number) => {
+  const found = await db
+    .select()
+    .from(schema.vehicles)
+    .where(eq(schema.vehicles.id, id));
+  return found[0];
+};
+
+export const getAllOffers = async () => {
+  return await db.select().from(schema.offers);
+};
+
+export const getAllAuctions = async () => {
+  return await db.select().from(schema.auctions);
 };
