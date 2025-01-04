@@ -46,6 +46,19 @@ export default function Home({ vehicles = [] }) {
   ];
   const [scraperUrl, setScrapeUrl] = useState<string>("");
 
+  const triggerScraper = async () => {
+    await fetch("/api/receive-auctions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        auctionUrl: scraperUrl,
+      }),
+    });
+    setScrapeUrl("");
+  };
+
   return (
     <div className="overflow-y-scroll">
       <h1 className="title">Vehicles</h1>
@@ -56,7 +69,12 @@ export default function Home({ vehicles = [] }) {
           value={scraperUrl}
           onChange={(e) => setScrapeUrl(e.target.value)}
         />
-        <button className="button is-primary">Submit</button>
+        <button
+          onClick={triggerScraper}
+          className="button is-primary"
+          disabled={!scraperUrl.trim()}>
+          Submit
+        </button>
       </div>
       {vehicles.length > 0 && (
         <div className="h-96">

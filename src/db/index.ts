@@ -2,8 +2,10 @@ import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import * as schema from "./schema";
-const db = drizzle(process.env.DATABASE_URL!);
+import { vehicles, offers, auctions } from "./schema";
+const db = drizzle({
+  connection: process.env.DATABASE_URL!,
+});
 
 if (process.env.MIGRATE === "true") {
   void migrate(db, { migrationsFolder: "./drizzle" });
@@ -11,48 +13,68 @@ if (process.env.MIGRATE === "true") {
 
 export const createVehicle = async (vehicle: any) => {
   await db
-    .insert(schema.vehicles)
+    .insert(vehicles)
     .values(vehicle)
     .onConflictDoUpdate({
-      target: schema.vehicles.id,
+      target: vehicles.id,
       set: { ...vehicle },
     });
 };
 
-export const bulkCreateVehicle = async (vehicles: any[]) => {
-  await db.insert(schema.vehicles).values(vehicles).onConflictDoNothing();
-};
-
-export const upsertAuction = async (auction: any) => {
-  await db
-    .insert(schema.auctions)
-    .values(auction)
-    .onConflictDoUpdate({
-      target: schema.auctions.id,
-      set: { ...auction },
+export const bulkCreateVehicle = async (
+  newVehicles: any[],
+  auctionRecordId = 0
+) => {
+  newVehicles
+    .filter((v: any) => v.vin !== "" && v.url !== "")
+    .map((v: any) => ({
+      auctionId: auctionRecordId,
+      ...v,
+    }))
+    .forEach(async (v: any) => {
+      try {
+        await db.insert(vehicles).values(v);
+      } catch (e) {
+        console.log("error creating vehicle record:", {
+          e,
+          v,
+        });
+      }
     });
 };
 
+export const upsertAuction = async (auction: any) => {
+  return await db
+    .insert(auctions)
+    .values(auction)
+    .onConflictDoUpdate({
+      target: auctions.id,
+      set: { ...auction },
+    })
+    .returning({ auctionRecordId: auctions.id });
+};
+
 export const createOffer = async (offer: any) => {
-  await db.insert(schema.offers).values(offer);
+  await db.insert(offers).values(offer);
 };
 
 export const getAllVehicles = async () => {
-  return await db.select().from(schema.vehicles);
+  return await db.select().from(vehicles);
 };
 
 export const getVehicleById = async (id: number) => {
   const found = await db
     .select()
-    .from(schema.vehicles)
-    .where(eq(schema.vehicles.id, id));
+    .from(vehicles)
+    .leftJoin(offers, eq(offers.vehicleId, vehicles.id))
+    .where(eq(vehicles.id, id));
   return found[0];
 };
 
 export const getAllOffers = async () => {
-  return await db.select().from(schema.offers);
+  return await db.select().from(offers);
 };
 
 export const getAllAuctions = async () => {
-  return await db.select().from(schema.auctions);
+  return await db.select().from(auctions);
 };
