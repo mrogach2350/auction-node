@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { getVehicleById } from "@/db";
+import { getVehicleById } from "@/db/interactions/vehicles";
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 import { ColDef, themeQuartz, colorSchemeDarkBlue } from "ag-grid-community";
 
@@ -17,7 +17,8 @@ export default function VehicleShow({ vehicle }: { vehicle: any }) {
     { field: "validUntil" },
     { field: "retrivedAt" },
   ];
-  const getOffer = async ({ vin, mileage, id }: any) => {
+  const getOffer = async () => {
+    const { vin, mileage, id } = vehicle;
     setIsScraping(true);
     const result = await fetch("/api/receive-offers", {
       method: "POST",
@@ -39,8 +40,21 @@ export default function VehicleShow({ vehicle }: { vehicle: any }) {
     }
     setIsScraping(false);
   };
+
+  const handleDeleteListing = async () => {
+    await fetch("/api/vehicles/delete-vehicles", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vehicleIds: [vehicle.id],
+      }),
+    });
+    await router.push("/");
+  };
   return (
-    <div>
+    <div className="section">
       <div>
         <button
           onClick={() => router.push("/")}
@@ -53,6 +67,9 @@ export default function VehicleShow({ vehicle }: { vehicle: any }) {
           href={`https://${vehicle?.url}`}
           rel="noopener noreferrer">
           Link to Vehicle Listing Page
+        </a>
+        <a className="button is-danger ml-3" onClick={handleDeleteListing}>
+          Delete Listing
         </a>
         <h1 className="title">{vehicle?.title}</h1>
         <p>
@@ -78,9 +95,7 @@ export default function VehicleShow({ vehicle }: { vehicle: any }) {
           {isScraping ? (
             <button className="button is-info is-small">Loading...</button>
           ) : (
-            <button
-              className="button is-info is-small"
-              onClick={() => getOffer(vehicle)}>
+            <button className="button is-info is-small" onClick={getOffer}>
               Get Offer
             </button>
           )}

@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { createOffer } from "@/db";
+import { createOffer } from "@/db/interactions/offers";
 import { isEmpty } from "@/helpers";
 export default async function handler(
   req: NextApiRequest,

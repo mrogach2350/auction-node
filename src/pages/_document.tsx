@@ -8,7 +8,7 @@ export default function Document() {
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"></link>
       </Head>
-      <body className="section h-screen">
+      <body>
         <Main />
         <NextScript />
       </body>

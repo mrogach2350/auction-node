@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { bulkCreateVehicle, upsertAuction } from "@/db";
+import { upsertAuction } from "@/db/interactions/auctions";
+import { bulkCreateVehicle } from "@/db/interactions/vehicles";
 
 export default async function handler(
   req: NextApiRequest,
