@@ -31,7 +31,7 @@ export const offers = pgTable("offers", {
   code: text(),
   offeringCompany: text().default("carmax"),
   validUntil: timestamp(),
-  vehicleId: integer(),
+  vehicleId: integer().references(() => vehicles.id, { onDelete: "cascade" }),
 });
 
 export const offersRelations = relations(offers, ({ one }) => ({

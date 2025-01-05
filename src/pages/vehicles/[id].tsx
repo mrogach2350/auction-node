@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { getVehicleById } from "@/db";
+import { getVehicleById } from "@/db/interactions/vehicles";
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 import { ColDef, themeQuartz, colorSchemeDarkBlue } from "ag-grid-community";
 
