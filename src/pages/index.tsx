@@ -2,19 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { getAllVehicles } from "@/db";
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
-import {
-  // ClientSideRowModelModule,
-  ColDef,
-  themeQuartz,
-  colorSchemeDarkBlue,
-  // ColGroupDef,
-  // GridApi,
-  // GridOptions,
-  // GridReadyEvent,
-  // ModuleRegistry,
-  // ValidationModule,
-  // createGrid,
-} from "ag-grid-community";
+import { ColDef, themeQuartz, colorSchemeDarkBlue } from "ag-grid-community";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
@@ -45,8 +33,10 @@ export default function Home({ vehicles = [] }) {
     },
   ];
   const [scraperUrl, setScrapeUrl] = useState<string>("");
+  const [isScraping, setIsScraping] = useState<boolean>(false);
 
   const triggerScraper = async () => {
+    setIsScraping(true);
     await fetch("/api/receive-auctions", {
       method: "POST",
       headers: {
@@ -56,7 +46,9 @@ export default function Home({ vehicles = [] }) {
         auctionUrl: scraperUrl,
       }),
     });
+    await router.replace(router.asPath);
     setScrapeUrl("");
+    setIsScraping(false);
   };
 
   return (
@@ -69,12 +61,18 @@ export default function Home({ vehicles = [] }) {
           value={scraperUrl}
           onChange={(e) => setScrapeUrl(e.target.value)}
         />
-        <button
-          onClick={triggerScraper}
-          className="button is-primary"
-          disabled={!scraperUrl.trim()}>
-          Submit
-        </button>
+        {isScraping ? (
+          <button className="button is-info" disabled>
+            Loading...
+          </button>
+        ) : (
+          <button
+            onClick={triggerScraper}
+            className="button is-primary"
+            disabled={!scraperUrl.trim()}>
+            Submit
+          </button>
+        )}
       </div>
       {vehicles.length > 0 && (
         <div className="h-96">
@@ -85,38 +83,6 @@ export default function Home({ vehicles = [] }) {
           />
         </div>
       )}
-      {/* {vehicles.length > 0 && (
-        <div className="tabel-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Make</th>
-                <th>Model</th>
-                <th>Mileage</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vehicles.map((v: any) => (
-                <tr key={v.id}>
-                  <td>{v.title}</td>
-                  <td>{v.make}</td>
-                  <td>{v.model}</td>
-                  <td>{v.mileage}</td>
-                  <td>
-                    <button
-                      onClick={() => router.push(`/vehicles/${v.id}`)}
-                      className="button is-info">
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )} */}
     </div>
   );
 }

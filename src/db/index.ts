@@ -2,9 +2,11 @@ import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
+import * as schema from "./schema";
 import { vehicles, offers, auctions } from "./schema";
 const db = drizzle({
   connection: process.env.DATABASE_URL!,
+  schema,
 });
 
 if (process.env.MIGRATE === "true") {
@@ -54,8 +56,20 @@ export const upsertAuction = async (auction: any) => {
     .returning({ auctionRecordId: auctions.id });
 };
 
-export const createOffer = async (offer: any) => {
-  await db.insert(offers).values(offer);
+export const createOffer = async (offer: any, vehicleId = 0) => {
+  if (!offer?.code || !offer?.validUntil) return;
+  try {
+    return await db
+      .insert(offers)
+      .values({
+        ...offer,
+        vehicleId,
+        validUntil: new Date(offer?.validUntil),
+      })
+      .returning();
+  } catch (e) {
+    console.log("error creating offer record", e);
+  }
 };
 
 export const getAllVehicles = async () => {
@@ -63,12 +77,21 @@ export const getAllVehicles = async () => {
 };
 
 export const getVehicleById = async (id: number) => {
-  const found = await db
-    .select()
-    .from(vehicles)
-    .leftJoin(offers, eq(offers.vehicleId, vehicles.id))
-    .where(eq(vehicles.id, id));
-  return found[0];
+  const vehicle = await db.query.vehicles.findFirst({
+    with: {
+      offers: true,
+    },
+    where: eq(vehicles.id, id),
+  });
+
+  return {
+    ...vehicle,
+    offers: vehicle?.offers.map((o) => ({
+      ...o,
+      retrivedAt: o.retrivedAt?.toDateString(),
+      validUntil: o.validUntil?.toDateString(),
+    })),
+  };
 };
 
 export const getAllOffers = async () => {

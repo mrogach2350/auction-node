@@ -27,8 +27,8 @@ export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
 export const offers = pgTable("offers", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   amount: integer(),
-  retrivedAt: timestamp(),
-  offerCode: text(),
+  retrivedAt: timestamp().defaultNow(),
+  code: text(),
   offeringCompany: text().default("carmax"),
   validUntil: timestamp(),
   vehicleId: integer(),
