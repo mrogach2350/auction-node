@@ -55,3 +55,14 @@ export const bulkCreateVehicle = async (
       }
     });
 };
+
+export const deleteVehicleById = async (vehicleId: number) => {
+  try {
+    await db.delete(vehicles).where(eq(vehicles.id, vehicleId));
+  } catch (e) {
+    console.log("error deleting vehicle record:", {
+      e,
+      vehicleId,
+    });
+  }
+};

@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/router";
-import { getAllVehicles } from "@/db/interactions/vehicles";
+import { getAllVehicles, deleteVehicleById } from "@/db/interactions/vehicles";
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
-import { ColDef, themeQuartz, colorSchemeDarkBlue } from "ag-grid-community";
+import {
+  ColDef,
+  themeQuartz,
+  colorSchemeDarkBlue,
+  RowSelectionOptions,
+  SelectionChangedEvent,
+} from "ag-grid-community";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
@@ -32,8 +38,14 @@ export default function Home({ vehicles = [] }) {
       },
     },
   ];
+  const rowSelection = useMemo<RowSelectionOptions>(() => {
+    return {
+      mode: "multiRow",
+    };
+  }, []);
   const [scraperUrl, setScrapeUrl] = useState<string>("");
   const [isScraping, setIsScraping] = useState<boolean>(false);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<number[]>([]);
 
   const triggerScraper = async () => {
     setIsScraping(true);
@@ -51,8 +63,27 @@ export default function Home({ vehicles = [] }) {
     setIsScraping(false);
   };
 
+  const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
+    const selectedNodes = event.api.getSelectedNodes();
+    const selectedIds = selectedNodes.map((n) => n?.data?.id);
+    setSelectedNodeIds(selectedIds);
+  }, []);
+
+  const handleDeleteListings = async () => {
+    await fetch("/api/vehicles/delete-vehicles", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vehicleIds: selectedNodeIds,
+      }),
+    });
+    await router.replace(router.asPath);
+  };
+
   return (
-    <div className="overflow-y-scroll">
+    <div className="section h-full">
       <h1 className="title">Vehicles</h1>
       <div className="flex space-x-2 w-1/2 items-baseline">
         <h3 className="subtitle flex-none">Scrape Url</h3>
@@ -75,11 +106,23 @@ export default function Home({ vehicles = [] }) {
         )}
       </div>
       {vehicles.length > 0 && (
-        <div className="h-96">
+        <div className="h-5/6">
+          <button
+            className="button is-danger mb-2"
+            disabled={!selectedNodeIds.length}
+            onClick={handleDeleteListings}>
+            Delete Selected Rows
+          </button>
           <AgGridReact
+            className="h-full"
+            rowSelection={rowSelection}
             theme={myTheme}
             columnDefs={colDefs}
             rowData={vehicles}
+            onSelectionChanged={onSelectionChanged}
+            autoSizeStrategy={{
+              type: "fitGridWidth",
+            }}
           />
         </div>
       )}

@@ -19,3 +19,9 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+#__next,
+html,
+body {
+  @apply h-full;
+}
