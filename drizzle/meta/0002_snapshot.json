@@ -1,6 +1,6 @@
 {
-  "id": "c4457b64-5578-4438-906e-c2545f1359cb",
-  "prevId": "0204803f-5ad9-48bc-a3f9-c30cd5ead299",
+  "id": "51360ad1-d34a-49b4-95e5-8aa0edb78bba",
+  "prevId": "a2cb9828-6f85-433d-a9f9-d6bd306d0db7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -27,13 +27,13 @@
         },
         "company": {
           "name": "company",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "url": {
           "name": "url",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
@@ -77,24 +77,31 @@
           "name": "retrivedAt",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "now()"
         },
-        "offer_code": {
-          "name": "offer_code",
-          "type": "varchar(255)",
+        "code": {
+          "name": "code",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "offering_company": {
-          "name": "offering_company",
-          "type": "varchar(255)",
+        "offeringCompany": {
+          "name": "offeringCompany",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "default": "'carmax'"
         },
-        "valid_until": {
-          "name": "valid_until",
+        "validUntil": {
+          "name": "validUntil",
           "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vehicleId": {
+          "name": "vehicleId",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         }
@@ -130,37 +137,37 @@
         },
         "title": {
           "name": "title",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "listNumber": {
           "name": "listNumber",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "engine": {
           "name": "engine",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "transmission": {
           "name": "transmission",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "make": {
           "name": "make",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "model": {
           "name": "model",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -172,7 +179,7 @@
         },
         "vin": {
           "name": "vin",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -184,9 +191,15 @@
         },
         "url": {
           "name": "url",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "auctionId": {
+          "name": "auctionId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

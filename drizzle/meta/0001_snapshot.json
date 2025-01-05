@@ -1,6 +1,6 @@
 {
-  "id": "0204803f-5ad9-48bc-a3f9-c30cd5ead299",
-  "prevId": "a6372e86-e773-415a-8c07-0565367c5c76",
+  "id": "a2cb9828-6f85-433d-a9f9-d6bd306d0db7",
+  "prevId": "39b43dfc-c14c-4fa7-bc0b-2d102f8f97d0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -27,13 +27,13 @@
         },
         "company": {
           "name": "company",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "url": {
           "name": "url",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
@@ -79,22 +79,28 @@
           "primaryKey": false,
           "notNull": false
         },
-        "offer_code": {
-          "name": "offer_code",
-          "type": "varchar(255)",
+        "offerCode": {
+          "name": "offerCode",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "offering_company": {
-          "name": "offering_company",
-          "type": "varchar(255)",
+        "offeringCompany": {
+          "name": "offeringCompany",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "default": "'carmax'"
         },
-        "valid_until": {
-          "name": "valid_until",
+        "validUntil": {
+          "name": "validUntil",
           "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vehicleId": {
+          "name": "vehicleId",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         }
@@ -128,15 +134,39 @@
             "cycle": false
           }
         },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "listNumber": {
+          "name": "listNumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "engine": {
+          "name": "engine",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transmission": {
+          "name": "transmission",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "make": {
           "name": "make",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "model": {
           "name": "model",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -148,7 +178,7 @@
         },
         "vin": {
           "name": "vin",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -160,9 +190,15 @@
         },
         "url": {
           "name": "url",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "auctionId": {
+          "name": "auctionId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
