@@ -14,6 +14,7 @@ export const vehicles = pgTable("vehicles", {
   year: integer(),
   url: text().notNull(),
   auctionId: integer(),
+  note: text().default(""),
 });
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({

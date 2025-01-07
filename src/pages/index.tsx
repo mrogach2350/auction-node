@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/router";
-import { getAllVehicles, deleteVehicleById } from "@/db/interactions/vehicles";
-import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
+import { getAllVehicles } from "@/db/interactions/vehicles";
+import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
   themeQuartz,
@@ -9,11 +9,17 @@ import {
   RowSelectionOptions,
   SelectionChangedEvent,
 } from "ag-grid-community";
+import NoteModal from "@/components/NoteModal";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
 export default function Home({ vehicles = [] }) {
   const router = useRouter();
+  const [scraperUrl, setScrapeUrl] = useState<string>("");
+  const [isScraping, setIsScraping] = useState<boolean>(false);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<number[]>([]);
+  const [showNoteModal, setShowNoteModal] = useState<boolean>(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<any>({});
   const colDefs: ColDef[] = [
     { field: "vin" },
     { field: "title", filter: true },
@@ -29,11 +35,21 @@ export default function Home({ vehicles = [] }) {
       field: "action",
       cellRenderer: ({ node }: { node: any }) => {
         return (
-          <button
-            onClick={() => router.push(`/vehicles/${node.data.id}`)}
-            className="button is-info is-small align-baseline">
-            View
-          </button>
+          <div className="flex space-x-3 items-center h-full">
+            <button
+              onClick={() => router.push(`/vehicles/${node.data.id}`)}
+              className="button is-info is-small">
+              View
+            </button>
+            <button
+              onClick={() => {
+                setSelectedVehicle({ id: node.data.id, note: node.data.note });
+                setShowNoteModal(true);
+              }}
+              className="button is-info is-small">
+              Note
+            </button>
+          </div>
         );
       },
     },
@@ -43,9 +59,6 @@ export default function Home({ vehicles = [] }) {
       mode: "multiRow",
     };
   }, []);
-  const [scraperUrl, setScrapeUrl] = useState<string>("");
-  const [isScraping, setIsScraping] = useState<boolean>(false);
-  const [selectedNodeIds, setSelectedNodeIds] = useState<number[]>([]);
 
   const triggerScraper = async () => {
     setIsScraping(true);
@@ -79,7 +92,13 @@ export default function Home({ vehicles = [] }) {
         vehicleIds: selectedNodeIds,
       }),
     });
+    setSelectedNodeIds([]);
     await router.replace(router.asPath);
+  };
+
+  const handleClose = () => {
+    setSelectedVehicle({});
+    setShowNoteModal(false);
   };
 
   return (
@@ -126,6 +145,11 @@ export default function Home({ vehicles = [] }) {
           />
         </div>
       )}
+      <NoteModal
+        isActive={showNoteModal}
+        handleClose={handleClose}
+        selectedVehicle={selectedVehicle}
+      />
     </div>
   );
 }
