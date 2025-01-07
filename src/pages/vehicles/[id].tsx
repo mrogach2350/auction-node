@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { getVehicleById } from "@/db/interactions/vehicles";
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 import { ColDef, themeQuartz, colorSchemeDarkBlue } from "ag-grid-community";
-import NoteModal from "@/components/NoteModal";
+import { getVehicleById } from "@/db/interactions/vehicles";
+import { secondsToHms } from "@/helpers";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 export default function VehicleShow({ vehicle }: { vehicle: any }) {
@@ -80,6 +80,20 @@ export default function VehicleShow({ vehicle }: { vehicle: any }) {
     setVehicleNoteValue(vehicle.note);
   };
 
+  const handleGetVehicleBid = async () => {
+    fetch("/api/vehicles/get-bids", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vehicleId: vehicle.id,
+        auctionUrl: vehicle.url,
+      }),
+    });
+    await router.replace(router.asPath);
+  };
+
   return (
     <div className="section">
       <div>
@@ -118,12 +132,26 @@ export default function VehicleShow({ vehicle }: { vehicle: any }) {
               <strong>Mileage</strong>:{" "}
               <span>{vehicle?.mileage?.toLocaleString()}</span>
             </p>
+            <p className="mt-2 border-white border-t flex justify-between items-baseline pr-5 pt-2">
+              <span>
+                <strong>Current Bid</strong>: {vehicle?.currentBidAmount}
+                <br />
+                <strong>Time Left to Bid</strong>:{" "}
+                {secondsToHms(vehicle?.secondsLeftToBid)}
+              </span>
+              <button
+                onClick={handleGetVehicleBid}
+                className="button is-small is-info">
+                Refresh bid
+              </button>
+            </p>
+            <p></p>
           </div>
           <div>
             <div className="flex space-x-3 items-baseline">
               <h1 className="subtitle">Note</h1>
               <button
-                className={`button is-info ${editNote ? "invisible" : "visible"}`}
+                className={`button is-info is-small ${editNote ? "invisible" : "visible"}`}
                 onClick={() => setEditNote(true)}>
                 Edit Note
               </button>
