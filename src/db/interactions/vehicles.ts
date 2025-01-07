@@ -34,6 +34,16 @@ export const createVehicle = async (vehicle: any) => {
     });
 };
 
+export const updateVehicle = async (vehicle: any) => {
+  const { id, ...vehicleData } = vehicle;
+  console.log("updateVehicle", { id, vehicleData });
+
+  await db
+    .update(vehicles)
+    .set({ ...vehicleData })
+    .where(eq(vehicles.id, id));
+};
+
 export const bulkCreateVehicle = async (
   newVehicles: any[],
   auctionRecordId = 0

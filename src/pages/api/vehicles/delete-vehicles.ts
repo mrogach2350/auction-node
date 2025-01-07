@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { upsertAuction } from "@/db/interactions/auctions";
 import { deleteVehicleById } from "@/db/interactions/vehicles";
 
 export default async function handler(
