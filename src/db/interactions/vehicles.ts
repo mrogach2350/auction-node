@@ -3,7 +3,20 @@ import { vehicles } from "@/db/schema";
 import { db } from "@/db";
 
 export const getAllVehicles = async () => {
-  return await db.select().from(vehicles);
+  const vehicles = await db.query.vehicles.findMany({
+    with: {
+      offers: true,
+    },
+  });
+
+  return vehicles.map((vehicle) => ({
+    ...vehicle,
+    offers: vehicle?.offers.map((o) => ({
+      ...o,
+      retrivedAt: o.retrivedAt?.toDateString(),
+      validUntil: o.validUntil?.toDateString(),
+    })),
+  }));
 };
 
 export const getVehicleById = async (id: number) => {

@@ -33,6 +33,11 @@ export default function Home({ vehicles = [] }) {
       valueFormatter: (m) => m.value && m.value.toLocaleString(),
     },
     { field: "year", sortable: true },
+    {
+      field: "offers",
+      headerName: "Latest Offer",
+      valueFormatter: (params) => params.value[0]?.amount || "No Offers",
+    },
     { field: "currentBidAmount", sortable: true },
     {
       field: "secondsLeftToBid",
