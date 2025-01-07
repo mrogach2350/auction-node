@@ -10,6 +10,7 @@ import {
   SelectionChangedEvent,
 } from "ag-grid-community";
 import NoteModal from "@/components/NoteModal";
+import { secondsToHms } from "@/helpers";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
@@ -17,7 +18,8 @@ export default function Home({ vehicles = [] }) {
   const router = useRouter();
   const [scraperUrl, setScrapeUrl] = useState<string>("");
   const [isScraping, setIsScraping] = useState<boolean>(false);
-  const [selectedNodeIds, setSelectedNodeIds] = useState<number[]>([]);
+  const [isScrapingBids, setIsScrapingBids] = useState<boolean>(false);
+  const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
   const [showNoteModal, setShowNoteModal] = useState<boolean>(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any>({});
   const colDefs: ColDef[] = [
@@ -31,6 +33,13 @@ export default function Home({ vehicles = [] }) {
       valueFormatter: (m) => m.value && m.value.toLocaleString(),
     },
     { field: "year", sortable: true },
+    { field: "currentBidAmount", sortable: true },
+    {
+      field: "secondsLeftToBid",
+      sortable: true,
+      headerName: "Time Left To Bid",
+      valueFormatter: (params) => secondsToHms(params.value),
+    },
     {
       field: "action",
       cellRenderer: ({ node }: { node: any }) => {
@@ -78,8 +87,7 @@ export default function Home({ vehicles = [] }) {
 
   const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
     const selectedNodes = event.api.getSelectedNodes();
-    const selectedIds = selectedNodes.map((n) => n?.data?.id);
-    setSelectedNodeIds(selectedIds);
+    setSelectedNodes(selectedNodes);
   }, []);
 
   const handleDeleteListings = async () => {
@@ -89,16 +97,36 @@ export default function Home({ vehicles = [] }) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        vehicleIds: selectedNodeIds,
+        vehicleIds: selectedNodes.map((n) => n?.data?.id),
       }),
     });
-    setSelectedNodeIds([]);
+    setSelectedNodes([]);
     await router.replace(router.asPath);
   };
 
   const handleClose = () => {
     setSelectedVehicle({});
     setShowNoteModal(false);
+  };
+
+  const handleGetVehicleBids = async () => {
+    setIsScrapingBids(true);
+    const httpCalls = selectedNodes.map((node) => {
+      return fetch("/api/vehicles/get-bids", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          vehicleId: node?.data?.id,
+          auctionUrl: node?.data?.url,
+        }),
+      });
+    });
+    await Promise.all(httpCalls);
+    setSelectedNodes([]);
+    setIsScrapingBids(false);
+    await router.replace(router.asPath);
   };
 
   return (
@@ -126,12 +154,26 @@ export default function Home({ vehicles = [] }) {
       </div>
       {vehicles.length > 0 && (
         <div className="h-5/6">
-          <button
-            className="button is-danger mb-2"
-            disabled={!selectedNodeIds.length}
-            onClick={handleDeleteListings}>
-            Delete Selected Rows
-          </button>
+          <div className="flex justify-end space-x-2 mb-2">
+            {isScrapingBids ? (
+              <button className="button is-info" disabled>
+                Loading...
+              </button>
+            ) : (
+              <button
+                className="button is-primary"
+                disabled={!selectedNodes.length}
+                onClick={handleGetVehicleBids}>
+                Get Bids for Selected Rows
+              </button>
+            )}
+            <button
+              className="button is-danger"
+              disabled={!selectedNodes.length}
+              onClick={handleDeleteListings}>
+              Delete Selected Rows
+            </button>
+          </div>
           <AgGridReact
             className="h-full"
             rowSelection={rowSelection}
