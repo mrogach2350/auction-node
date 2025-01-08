@@ -10,21 +10,18 @@ import {
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 import { ColDef, themeQuartz, colorSchemeDarkBlue } from "ag-grid-community";
 import { secondsToHms } from "@/helpers";
+import { getVehicleByIdQuery } from "@/queries";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 export default function VehicleShow() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isScraping, setIsScraping] = useState<boolean>(false);
   const [scrapingError, setScrapingError] = useState<string>("");
   const [editNote, setEditNote] = useState<boolean>(false);
   const [vehicleNoteValue, setVehicleNoteValue] = useState<string>("");
   const { data, isLoading } = useQuery({
     queryKey: ["vehicle"],
-    queryFn: async () => {
-      const response = await fetch(`/api/vehicles/${router.query.id}`);
-      return await response.json();
-    },
+    queryFn: getVehicleByIdQuery(router.query.id as string),
   });
 
   useEffect(() => {
@@ -227,29 +224,22 @@ export default function VehicleShow() {
         <div>
           <div className="flex items-baseline space-x-2">
             <h3 className="subtitle">Offers</h3>
-            {isScraping ? (
-              <button className="button is-info is-small">Loading...</button>
-            ) : (
-              <button
-                className="button is-info is-small"
-                onClick={() => getOfferMutation.mutate()}>
-                {getOfferMutation.isPending ? "Loading..." : "Get Offer"}
-              </button>
-            )}
+            <button
+              className="button is-info is-small"
+              onClick={() => getOfferMutation.mutate()}>
+              {getOfferMutation.isPending ? "Loading..." : "Get Offer"}
+            </button>
             {scrapingError && <p>{scrapingError}</p>}
           </div>
           <div className="flex flex-col space-y-3">
-            {data?.vehicle?.offers?.length ? (
-              <div className="h-96">
-                <AgGridReact
-                  theme={myTheme}
-                  columnDefs={colDefs}
-                  rowData={data?.vehicle?.offers}
-                />
-              </div>
-            ) : (
-              <div>No Offers</div>
-            )}
+            <div className="h-96">
+              <AgGridReact
+                theme={myTheme}
+                columnDefs={colDefs}
+                rowData={data?.vehicle?.offers || []}
+                noRowsOverlayComponent={() => <div>No Offers</div>}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -262,10 +252,7 @@ export const getServerSideProps = async (context: any) => {
 
   await queryClient.prefetchQuery({
     queryKey: ["vehicle"],
-    queryFn: async () => {
-      const response = await fetch(`/api/vehicles/${context.params.id}`);
-      return await response.json();
-    },
+    queryFn: getVehicleByIdQuery(context.params.id),
   });
 
   return {

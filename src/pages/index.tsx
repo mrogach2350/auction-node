@@ -16,6 +16,7 @@ import {
 } from "ag-grid-community";
 import NoteModal from "@/components/NoteModal";
 import { getColDefs } from "@/helpers";
+import { getAllVehiclesQuery } from "@/queries";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
@@ -28,10 +29,7 @@ export default function Home() {
   const [selectedVehicle, setSelectedVehicle] = useState<any>({});
   const { data, isLoading: areVehiclesLoading } = useQuery({
     queryKey: ["vehicles"],
-    queryFn: async () => {
-      const response = await fetch("/api/vehicles");
-      return await response.json();
-    },
+    queryFn: getAllVehiclesQuery,
   });
 
   const auctionScraperMutation = useMutation({
@@ -168,7 +166,7 @@ export default function Home() {
           </button>
         </div>
         <AgGridReact
-          className="h-full"
+          className="h-full pb-5"
           rowSelection={{
             mode: "multiRow",
           }}
@@ -179,6 +177,7 @@ export default function Home() {
           autoSizeStrategy={{
             type: "fitGridWidth",
           }}
+          noRowsOverlayComponent={() => <div>No Vehicles</div>}
         />
       </div>
       <NoteModal
@@ -195,10 +194,7 @@ export async function getServerSideProps() {
 
   await queryClient.prefetchQuery({
     queryKey: ["vehicles"],
-    queryFn: async () => {
-      const response = await fetch("/api/vehicles");
-      return await response.json();
-    },
+    queryFn: getAllVehiclesQuery,
   });
 
   return {
