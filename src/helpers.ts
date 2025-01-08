@@ -1,3 +1,5 @@
+import { ColDef } from "ag-grid-community";
+
 export function isEmpty(obj: {}) {
   for (const prop in obj) {
     if (Object.hasOwn(obj, prop)) {
@@ -19,3 +21,34 @@ export function secondsToHms(d: number) {
   // var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
   return !!mDisplay ? `${hDisplay}:${mDisplay}` : hDisplay;
 }
+
+export const getColDefs = (actionsCellRenderer: any): ColDef[] => {
+  return [
+    { field: "vin" },
+    { field: "title", filter: true },
+    { field: "make", sortable: true },
+    { field: "model" },
+    {
+      field: "mileage",
+      sortable: true,
+      valueFormatter: (m) => m.value && m.value.toLocaleString(),
+    },
+    { field: "year", sortable: true },
+    {
+      field: "offers",
+      headerName: "Latest Offer",
+      valueFormatter: (params) => params.value[0]?.amount || "No Offers",
+    },
+    { field: "currentBidAmount", sortable: true },
+    {
+      field: "secondsLeftToBid",
+      sortable: true,
+      headerName: "Time Left To Bid",
+      valueFormatter: (params) => secondsToHms(params.value),
+    },
+    {
+      field: "action",
+      cellRenderer: actionsCellRenderer,
+    },
+  ];
+};
