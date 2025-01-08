@@ -11,6 +11,8 @@
     "migrate": "npx drizzle-kit migrate"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.62.16",
+    "@tanstack/react-query-devtools": "^5.62.16",
     "ag-grid-react": "^33.0.3",
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@tanstack/eslint-plugin-query": "^5.62.16",
     "@types/node": "^20",
     "@types/pg": "^8.11.10",
     "@types/react": "^19",
