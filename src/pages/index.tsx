@@ -1,5 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
+import { userAgent } from "next/server";
+import { getSelectorsByUserAgent } from "react-device-detect";
 import {
   useQuery,
   useQueryClient,
@@ -20,7 +22,7 @@ import { getAllVehiclesQuery } from "@/queries";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
-export default function Home() {
+export default function Home({ isMobile }: { isMobile: boolean }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [scraperUrl, setScrapeUrl] = useState<string>("");
@@ -134,20 +136,45 @@ export default function Home() {
         />
       )}
       <h1 className="title">Vehicles</h1>
-      <div className="flex space-x-2 w-1/2 items-baseline">
-        <h3 className="subtitle flex-none">Scrape Url</h3>
-        <input
-          className="input"
-          value={scraperUrl}
-          onChange={(e) => setScrapeUrl(e.target.value)}
-        />
-        <button
-          onClick={() => auctionScraperMutation.mutate()}
-          className="button is-primary"
-          disabled={!scraperUrl.trim() || auctionScraperMutation.isPending}>
-          {auctionScraperMutation.isPending ? "Loading..." : "Submit"}
-        </button>
-      </div>
+      {isMobile ? (
+        <div className="flex items-end mb-2 space-x-2">
+          <div>
+            <label htmlFor="scraperUrl" className="subtitle flex-none">
+              Scrape Url
+            </label>
+            <input
+              name="scraperUrl"
+              className="input"
+              value={scraperUrl}
+              onChange={(e) => setScrapeUrl(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => auctionScraperMutation.mutate()}
+            className="button is-primary"
+            disabled={!scraperUrl.trim() || auctionScraperMutation.isPending}>
+            {auctionScraperMutation.isPending ? "Loading..." : "Submit"}
+          </button>
+        </div>
+      ) : (
+        <div className="flex space-x-2 w-1/2 items-baseline">
+          <label htmlFor="scraperUrl" className="subtitle flex-none">
+            Scrape Url
+          </label>
+          <input
+            name="scraperUrl"
+            className="input"
+            value={scraperUrl}
+            onChange={(e) => setScrapeUrl(e.target.value)}
+          />
+          <button
+            onClick={() => auctionScraperMutation.mutate()}
+            className="button is-primary"
+            disabled={!scraperUrl.trim() || auctionScraperMutation.isPending}>
+            {auctionScraperMutation.isPending ? "Loading..." : "Submit"}
+          </button>
+        </div>
+      )}
       <div className="h-5/6">
         <div className="flex justify-end space-x-2 mb-2">
           <button
@@ -175,7 +202,7 @@ export default function Home() {
           rowData={data?.vehicles}
           onSelectionChanged={onSelectionChanged}
           autoSizeStrategy={{
-            type: "fitGridWidth",
+            type: isMobile ? "fitCellContents" : "fitGridWidth",
           }}
           noRowsOverlayComponent={() => <div>No Vehicles</div>}
         />
@@ -189,7 +216,10 @@ export default function Home() {
   );
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context: any) {
+  const userAgent = context.req.headers["user-agent"];
+
+  const { isMobile } = getSelectorsByUserAgent(userAgent);
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
@@ -200,6 +230,7 @@ export async function getServerSideProps() {
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
+      isMobile,
     },
   };
 }
