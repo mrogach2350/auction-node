@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
+import { isMobile } from "react-device-detect";
 import {
   useQuery,
   useQueryClient,
@@ -175,7 +176,7 @@ export default function Home() {
           rowData={data?.vehicles}
           onSelectionChanged={onSelectionChanged}
           autoSizeStrategy={{
-            type: "fitGridWidth",
+            type: isMobile ? "fitCellContents" : "fitGridWidth",
           }}
           noRowsOverlayComponent={() => <div>No Vehicles</div>}
         />
