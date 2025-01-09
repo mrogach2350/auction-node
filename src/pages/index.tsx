@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
-import { userAgent } from "next/server";
 import { getSelectorsByUserAgent } from "react-device-detect";
 import {
   useQuery,
@@ -196,6 +195,7 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
           className="h-full pb-5"
           rowSelection={{
             mode: "multiRow",
+            selectAll: "filtered",
           }}
           theme={myTheme}
           columnDefs={colDefs}
