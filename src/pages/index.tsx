@@ -28,9 +28,38 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
   const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
   const [showNoteModal, setShowNoteModal] = useState<boolean>(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any>({});
+  const [gettingOfferId, setGettingOfferId] = useState<any>(null);
   const { data, isLoading: areVehiclesLoading } = useQuery({
     queryKey: ["vehicles"],
     queryFn: getAllVehiclesQuery,
+  });
+
+  const getOfferMutation = useMutation({
+    mutationFn: async ({ vin, mileage, id }: any) => {
+      setGettingOfferId(id);
+      return await fetch("/api/receive-offers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          vin,
+          mileage,
+          id,
+        }),
+      });
+    },
+    onSuccess: async (data) => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      // const { success, message = "" } = await data.json();
+      // if (!success) {
+      //   setScrapingError(message);
+      // } else {
+      //   setScrapingError("");
+      //   queryClient.invalidateQueries({ queryKey: ["vehicle"] });
+      // }
+    },
+    onSettled: () => setGettingOfferId(null),
   });
 
   const auctionScraperMutation = useMutation({
@@ -107,6 +136,16 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
           className="button is-info is-small">
           Note
         </button>
+        <button
+          onClick={() => {
+            const { vin, mileage, id } = node.data;
+            getOfferMutation.mutate({ vin, mileage, id });
+          }}
+          className="button is-info is-small">
+          {getOfferMutation.isPending && gettingOfferId === node.data.id
+            ? "Loading..."
+            : "Get Offer"}
+        </button>
       </div>
     );
   });
@@ -124,7 +163,8 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
   const showLoadingBar =
     areVehiclesLoading ||
     auctionScraperMutation.isPending ||
-    deleteVehiclesMutation.isPending;
+    deleteVehiclesMutation.isPending ||
+    getOfferMutation.isPending;
 
   return (
     <div className="section h-full">
@@ -202,7 +242,7 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
           rowData={data?.vehicles}
           onSelectionChanged={onSelectionChanged}
           autoSizeStrategy={{
-            type: isMobile ? "fitCellContents" : "fitGridWidth",
+            type: "fitCellContents",
           }}
           noRowsOverlayComponent={() => <div>No Vehicles</div>}
         />

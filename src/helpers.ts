@@ -24,16 +24,12 @@ export function secondsToHms(d: number) {
 
 export const getColDefs = (actionsCellRenderer: any): ColDef[] => {
   return [
-    { field: "vin" },
-    { field: "title", filter: true },
-    { field: "make", sortable: true },
-    { field: "model" },
     {
-      field: "mileage",
-      sortable: true,
-      valueFormatter: (m) => m.value && m.value.toLocaleString(),
+      field: "action",
+      cellRenderer: actionsCellRenderer,
+      suppressSizeToFit: true,
     },
-    { field: "year", sortable: true },
+    { field: "title", filter: true },
     {
       field: "offers",
       headerName: "Latest Offer",
@@ -46,9 +42,14 @@ export const getColDefs = (actionsCellRenderer: any): ColDef[] => {
       headerName: "Time Left To Bid",
       valueFormatter: (params) => secondsToHms(params.value),
     },
+    { field: "vin" },
+    { field: "make", sortable: true },
+    { field: "model" },
     {
-      field: "action",
-      cellRenderer: actionsCellRenderer,
+      field: "mileage",
+      sortable: true,
+      valueFormatter: (m) => m.value && m.value.toLocaleString(),
     },
+    { field: "year", sortable: true },
   ];
 };
