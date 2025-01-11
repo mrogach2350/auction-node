@@ -50,6 +50,20 @@
       "when": 1736234085468,
       "tag": "0006_wakeful_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1736555120808,
+      "tag": "0007_friendly_fantastic_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1736555874003,
+      "tag": "0008_faulty_slyde",
+      "breakpoints": true
     }
   ]
 }
