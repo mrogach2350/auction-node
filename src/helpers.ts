@@ -24,12 +24,12 @@ export function secondsToHms(d: number) {
 
 export const getColDefs = (actionsCellRenderer: any): ColDef[] => {
   return [
+    { field: "title", filter: true },
     {
       field: "action",
       cellRenderer: actionsCellRenderer,
       suppressSizeToFit: true,
     },
-    { field: "title", filter: true },
     {
       field: "offers",
       headerName: "Latest Offer",
