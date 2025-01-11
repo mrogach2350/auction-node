@@ -232,6 +232,7 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
           </button>
         </div>
         <AgGridReact
+          pagination
           className="h-full pb-5"
           rowSelection={{
             mode: "multiRow",
