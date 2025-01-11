@@ -1,22 +1,20 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { updateVehicle } from "@/db/interactions/vehicles";
+import { getAllLists } from "@/db/interactions/lists";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { id, note } = req.body;
-
   try {
-    await updateVehicle({ id, note });
+    const lists = await getAllLists();
     res.json({
       success: true,
-      message: "vehicle updated",
+      lists,
     });
   } catch (e) {
     res.json({
       success: false,
-      message: `Error updating vehicle: ${e}`,
+      error: e,
     });
   }
 }
