@@ -7,6 +7,10 @@ import {
   HydrationBoundary,
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { config } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
+
+config.autoAddCss = false;
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 const queryClient = new QueryClient();

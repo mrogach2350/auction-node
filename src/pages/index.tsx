@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/router";
 import { getSelectorsByUserAgent } from "react-device-detect";
 import {
@@ -18,6 +18,7 @@ import {
 import NoteModal from "@/components/NoteModal";
 import { getColDefs } from "@/helpers";
 import { getAllVehiclesQuery } from "@/queries";
+import ListDropdown from "@/components/ListsDropdown";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
@@ -120,6 +121,29 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
     },
   });
 
+  const updateNoteMutation = useMutation<
+    any,
+    unknown,
+    { id: number; note: string }
+  >({
+    mutationFn: async ({ id, note }) => {
+      await fetch("/api/vehicles/update-vehicles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          note,
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      setShowNoteModal(false);
+    },
+  });
+
   const colDefs: ColDef[] = getColDefs(({ node }: { node: any }) => {
     return (
       <div className="flex space-x-3 items-center h-full">
@@ -215,21 +239,28 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
         </div>
       )}
       <div className="h-5/6">
-        <div className="flex justify-end space-x-2 mb-2">
-          <button
-            className="button is-primary"
-            disabled={!selectedNodes.length || getAuctionBidsMutation.isPending}
-            onClick={() => getAuctionBidsMutation.mutate()}>
-            {getAuctionBidsMutation.isPending
-              ? "Loading..."
-              : "Get Bids for Selected Rows"}
-          </button>
-          <button
-            className="button is-danger"
-            disabled={!selectedNodes.length || deleteVehiclesMutation.isPending}
-            onClick={() => deleteVehiclesMutation.mutate()}>
-            {deleteVehiclesMutation.isPending ? "Loading..." : "Delete"}
-          </button>
+        <div className="flex justify-between">
+          <ListDropdown />
+          <div className="flex justify-end space-x-2 mb-2">
+            <button
+              className="button is-primary"
+              disabled={
+                !selectedNodes.length || getAuctionBidsMutation.isPending
+              }
+              onClick={() => getAuctionBidsMutation.mutate()}>
+              {getAuctionBidsMutation.isPending
+                ? "Loading..."
+                : "Get Bids for Selected Rows"}
+            </button>
+            <button
+              className="button is-danger"
+              disabled={
+                !selectedNodes.length || deleteVehiclesMutation.isPending
+              }
+              onClick={() => deleteVehiclesMutation.mutate()}>
+              {deleteVehiclesMutation.isPending ? "Loading..." : "Delete"}
+            </button>
+          </div>
         </div>
         <AgGridReact
           pagination
@@ -248,11 +279,13 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
           noRowsOverlayComponent={() => <div>No Vehicles</div>}
         />
       </div>
-      <NoteModal
-        isActive={showNoteModal}
-        handleClose={handleClose}
-        selectedVehicle={selectedVehicle}
-      />
+      {showNoteModal && (
+        <NoteModal
+          onClose={handleClose}
+          selectedVehicle={selectedVehicle}
+          onSave={updateNoteMutation.mutate}
+        />
+      )}
     </div>
   );
 }
