@@ -10,13 +10,14 @@ export const vehicles = pgTable("vehicles", {
   make: text(),
   model: text(),
   mileage: integer(),
-  vin: text().notNull(),
+  vin: text().notNull().unique(),
   year: integer(),
   url: text().notNull(),
   auctionId: integer(),
   note: text().default(""),
   currentBidAmount: text(),
   secondsLeftToBid: integer(),
+  deletedAt: timestamp(),
 });
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({

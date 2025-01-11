@@ -7,6 +7,7 @@ export const getAllVehicles = async () => {
     with: {
       offers: true,
     },
+    where: (vehicles, { isNull }) => isNull(vehicles.deletedAt),
   });
 
   return vehicles.map((vehicle) => ({
@@ -43,7 +44,7 @@ export const createVehicle = async (vehicle: any) => {
     .values(vehicle)
     .onConflictDoUpdate({
       target: vehicles.id,
-      set: { ...vehicle },
+      set: { ...vehicle, deletedAt: null },
     });
 };
 
@@ -69,7 +70,13 @@ export const bulkCreateVehicle = async (
     }))
     .forEach(async (v: any) => {
       try {
-        await db.insert(vehicles).values(v);
+        await db
+          .insert(vehicles)
+          .values(v)
+          .onConflictDoUpdate({
+            target: vehicles.vin,
+            set: { ...v, deletedAt: null },
+          });
       } catch (e) {
         console.log("error creating vehicle record:", {
           e,
@@ -81,7 +88,10 @@ export const bulkCreateVehicle = async (
 
 export const deleteVehicleById = async (vehicleId: number) => {
   try {
-    await db.delete(vehicles).where(eq(vehicles.id, vehicleId));
+    await db
+      .update(vehicles)
+      .set({ deletedAt: new Date() })
+      .where(eq(vehicles.id, vehicleId));
   } catch (e) {
     console.log("error deleting vehicle record:", {
       e,

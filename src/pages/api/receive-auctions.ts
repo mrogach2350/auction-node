@@ -29,7 +29,7 @@ export default async function handler(
     await bulkCreateVehicle(allListings, returnedRecord.auctionRecordId);
     return res.json({
       success: true,
-      auctionsReceived: allListings.legnth,
+      auctionsReceived: allListings.length,
     });
   } catch (error: any) {
     return res.json({
