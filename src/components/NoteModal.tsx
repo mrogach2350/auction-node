@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import type { UseMutateFunction } from "@tanstack/react-query";
 import { Modal } from "react-bulma-components";
-
+import { useUpdateNoteMutation } from "@/mutations";
 export default function NoteModal({
   onClose,
-  onSave,
+  onSuccess,
   selectedVehicle = { id: 0, note: "" },
 }: {
   onClose: () => void;
-  onSave: UseMutateFunction<any, unknown, { id: number; note: string }>;
+  onSuccess: (arg: any) => void;
   selectedVehicle: { id: number; note: string };
 }) {
+  const updateNoteMutation = useUpdateNoteMutation();
   const [vehicleNoteValue, setVehicleNoteValue] = useState<string>();
   useEffect(() => {
     setVehicleNoteValue(selectedVehicle.note);
@@ -27,10 +28,13 @@ export default function NoteModal({
         <div className="flex space-x-3 mt-3">
           <button
             onClick={() =>
-              onSave({
-                id: selectedVehicle.id,
-                note: vehicleNoteValue as string,
-              })
+              updateNoteMutation.mutate(
+                {
+                  id: selectedVehicle.id,
+                  note: vehicleNoteValue as string,
+                },
+                { onSuccess: onSuccess }
+              )
             }
             className="button is-primary">
             Save
