@@ -4,7 +4,13 @@ import { Dropdown, Modal, Button, Form } from "react-bulma-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleDown } from "@fortawesome/free-solid-svg-icons";
 
-export default function ListDropdown() {
+export default function ListDropdown({
+  selectedListId,
+  onChange,
+}: {
+  selectedListId: number;
+  onChange: (n: number) => void;
+}) {
   const [showNewListModal, setShowNewListModal] = useState<boolean>(false);
   const { data, isLoading } = useQuery({
     queryFn: async () => {
@@ -17,7 +23,8 @@ export default function ListDropdown() {
   const handleOnChange = (data: string | number) => {
     if (data === "createNew") {
       setShowNewListModal(true);
-      return;
+    } else {
+      onChange(data as number);
     }
   };
 
@@ -28,19 +35,17 @@ export default function ListDropdown() {
       ) : (
         <Dropdown
           onChange={handleOnChange}
-          closeOnSelect={false}
-          color=""
-          icon={<FontAwesomeIcon className="ml-2" icon={faAngleDown} />}
-          label="Lists">
-          {data?.lists?.length !== 0 ? (
-            data?.lists?.map((list: any) => (
-              <Dropdown.Item renderAs="a" key={list.id} value={list.id}>
-                {list.title}
-              </Dropdown.Item>
-            ))
-          ) : (
-            <Dropdown.Item value="">No Lists</Dropdown.Item>
-          )}
+          value={selectedListId}
+          closeOnSelect
+          icon={<FontAwesomeIcon className="ml-2" icon={faAngleDown} />}>
+          <Dropdown.Item renderAs="a" value={0}>
+            All
+          </Dropdown.Item>
+          {data?.lists?.map((list: any) => (
+            <Dropdown.Item renderAs="a" key={list.id} value={list.id}>
+              {list.title}
+            </Dropdown.Item>
+          ))}
           <Dropdown.Divider />
           <Dropdown.Item renderAs="button" value="createNew">
             Create New List

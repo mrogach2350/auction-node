@@ -33,7 +33,8 @@ export const getColDefs = (actionsCellRenderer: any): ColDef[] => {
     {
       field: "offers",
       headerName: "Latest Offer",
-      valueFormatter: (params) => params.value[0]?.amount || "No Offers",
+      valueFormatter: (params) =>
+        (params?.value && params?.value[0]?.amount) || "No Offers",
     },
     { field: "currentBidAmount", sortable: true },
     {

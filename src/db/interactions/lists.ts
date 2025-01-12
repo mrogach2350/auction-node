@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { lists, vehiclesToLists } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { lists, vehiclesToLists, vehicles } from "@/db/schema";
 import { db } from "@/db";
 
 export const getAllLists = async () => {
@@ -44,6 +44,50 @@ export const createList = async (list: any) => {
   }
 };
 
-export const addVehicleToList = async (listId: number, vehicleId: number) => {
-  await db.insert(vehiclesToLists).values({ listId, vehicleId });
+export const addVehiclesToList = async (
+  listId: number,
+  vehicleIds: number[]
+) => {
+  await Promise.all(
+    vehicleIds.map((id) =>
+      db
+        .insert(vehiclesToLists)
+        .values({ listId: listId, vehicleId: id })
+        .onConflictDoNothing({
+          where: and(
+            eq(vehiclesToLists.listId, listId),
+            eq(vehiclesToLists.vehicleId, listId)
+          ),
+        })
+    )
+  );
+};
+
+export const removeVehiclesFromList = async (
+  listId: number,
+  vehicleIds: number[]
+) => {
+  await Promise.all(
+    vehicleIds.map((id) =>
+      db
+        .delete(vehiclesToLists)
+        .where(
+          and(
+            eq(vehiclesToLists.listId, listId),
+            eq(vehiclesToLists.vehicleId, listId)
+          )
+        )
+    )
+  );
+};
+
+export const getVehiclesByListId = async (listId: number) => {
+  const results = await db
+    .select()
+    .from(vehiclesToLists)
+    .leftJoin(vehicles, eq(vehiclesToLists.vehicleId, vehicles.id))
+    .leftJoin(lists, eq(vehiclesToLists.listId, lists.id))
+    .where(eq(lists.id, listId));
+
+  return results.map((result) => result.vehicles);
 };
