@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { getSelectorsByUserAgent } from "react-device-detect";
 import {
@@ -18,10 +18,13 @@ import {
 import NoteModal from "@/components/NoteModal";
 import { getColDefs } from "@/helpers";
 import { getAllVehiclesQuery } from "@/queries";
+import ListDropdown from "@/components/ListsDropdown";
+import AddToListDropDown from "@/components/AddToListDropdown";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
 export default function Home({ isMobile }: { isMobile: boolean }) {
+  const gridRef = useRef<AgGridReact<any>>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [scraperUrl, setScrapeUrl] = useState<string>("");
@@ -29,10 +32,59 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
   const [showNoteModal, setShowNoteModal] = useState<boolean>(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any>({});
   const [gettingOfferId, setGettingOfferId] = useState<any>(null);
-  const { data, isLoading: areVehiclesLoading } = useQuery({
+  const [selectedListId, setSelectedListId] = useState<number>(0);
+
+  const colDefs: ColDef[] = getColDefs(({ node }: { node: any }) => {
+    return (
+      <div className="flex space-x-3 items-center h-full">
+        <button
+          onClick={() => router.push(`/vehicles/${node.data.id}`)}
+          className="button is-info is-small">
+          View
+        </button>
+        <button
+          onClick={() => {
+            setSelectedVehicle({ id: node.data.id, note: node.data.note });
+            setShowNoteModal(true);
+          }}
+          className="button is-info is-small">
+          Note
+        </button>
+        <button
+          onClick={() => {
+            const { vin, mileage, id } = node.data;
+            getOfferMutation.mutate({ vin, mileage, id });
+          }}
+          className="button is-info is-small">
+          {getOfferMutation.isPending && gettingOfferId === node.data.id
+            ? "Loading..."
+            : "Get Offer"}
+        </button>
+      </div>
+    );
+  });
+
+  const { data: allVehiclesData, isLoading: areVehiclesLoading } = useQuery({
     queryKey: ["vehicles"],
     queryFn: getAllVehiclesQuery,
   });
+
+  const { data: vehiclesByListData, isLoading: areVehiclesByListLoading } =
+    useQuery({
+      queryKey: ["vehiclesByList", selectedListId],
+      queryFn: async () => {
+        const res = await fetch(`/api/lists/${selectedListId}/vehicles`);
+        return await res.json();
+      },
+    });
+
+  useEffect(() => {
+    if (selectedListId !== 0) {
+      queryClient.invalidateQueries({
+        queryKey: ["vehiclesByList", selectedListId],
+      });
+    }
+  }, [selectedListId]);
 
   const getOfferMutation = useMutation({
     mutationFn: async ({ vin, mileage, id }: any) => {
@@ -120,34 +172,27 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
     },
   });
 
-  const colDefs: ColDef[] = getColDefs(({ node }: { node: any }) => {
-    return (
-      <div className="flex space-x-3 items-center h-full">
-        <button
-          onClick={() => router.push(`/vehicles/${node.data.id}`)}
-          className="button is-info is-small">
-          View
-        </button>
-        <button
-          onClick={() => {
-            setSelectedVehicle({ id: node.data.id, note: node.data.note });
-            setShowNoteModal(true);
-          }}
-          className="button is-info is-small">
-          Note
-        </button>
-        <button
-          onClick={() => {
-            const { vin, mileage, id } = node.data;
-            getOfferMutation.mutate({ vin, mileage, id });
-          }}
-          className="button is-info is-small">
-          {getOfferMutation.isPending && gettingOfferId === node.data.id
-            ? "Loading..."
-            : "Get Offer"}
-        </button>
-      </div>
-    );
+  const updateNoteMutation = useMutation<
+    any,
+    unknown,
+    { id: number; note: string }
+  >({
+    mutationFn: async ({ id, note }) => {
+      await fetch("/api/vehicles/update-vehicles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          note,
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      setShowNoteModal(false);
+    },
   });
 
   const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
@@ -160,7 +205,18 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
     setShowNoteModal(false);
   };
 
+  const handleListChange = (id: any) => {
+    setSelectedListId(id);
+  };
+
+  const onAddVehicleToList = (listId: number) => {
+    gridRef?.current?.api.setFilterModel(null);
+    gridRef?.current?.api.deselectAll();
+    setSelectedListId(listId);
+  };
+
   const showLoadingBar =
+    areVehiclesByListLoading ||
     areVehiclesLoading ||
     auctionScraperMutation.isPending ||
     deleteVehiclesMutation.isPending ||
@@ -215,23 +271,38 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
         </div>
       )}
       <div className="h-5/6">
-        <div className="flex justify-end space-x-2 mb-2">
-          <button
-            className="button is-primary"
-            disabled={!selectedNodes.length || getAuctionBidsMutation.isPending}
-            onClick={() => getAuctionBidsMutation.mutate()}>
-            {getAuctionBidsMutation.isPending
-              ? "Loading..."
-              : "Get Bids for Selected Rows"}
-          </button>
-          <button
-            className="button is-danger"
-            disabled={!selectedNodes.length || deleteVehiclesMutation.isPending}
-            onClick={() => deleteVehiclesMutation.mutate()}>
-            {deleteVehiclesMutation.isPending ? "Loading..." : "Delete"}
-          </button>
+        <div className="flex justify-between">
+          <ListDropdown
+            selectedListId={selectedListId}
+            onChange={handleListChange}
+          />
+          <div className="flex justify-end space-x-2 mb-2">
+            <AddToListDropDown
+              selectedVehicleNodes={selectedNodes}
+              onSave={onAddVehicleToList}
+            />
+            <button
+              className="button is-primary"
+              disabled={
+                !selectedNodes.length || getAuctionBidsMutation.isPending
+              }
+              onClick={() => getAuctionBidsMutation.mutate()}>
+              {getAuctionBidsMutation.isPending
+                ? "Loading..."
+                : "Get Bids for Selected Rows"}
+            </button>
+            <button
+              className="button is-danger"
+              disabled={
+                !selectedNodes.length || deleteVehiclesMutation.isPending
+              }
+              onClick={() => deleteVehiclesMutation.mutate()}>
+              {deleteVehiclesMutation.isPending ? "Loading..." : "Delete"}
+            </button>
+          </div>
         </div>
         <AgGridReact
+          ref={gridRef}
           pagination
           className="h-full pb-5"
           rowSelection={{
@@ -240,7 +311,11 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
           }}
           theme={myTheme}
           columnDefs={colDefs}
-          rowData={data?.vehicles}
+          rowData={
+            selectedListId === 0
+              ? allVehiclesData?.vehicles
+              : vehiclesByListData?.vehicles
+          }
           onSelectionChanged={onSelectionChanged}
           autoSizeStrategy={{
             type: "fitCellContents",
@@ -248,11 +323,13 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
           noRowsOverlayComponent={() => <div>No Vehicles</div>}
         />
       </div>
-      <NoteModal
-        isActive={showNoteModal}
-        handleClose={handleClose}
-        selectedVehicle={selectedVehicle}
-      />
+      {showNoteModal && (
+        <NoteModal
+          onClose={handleClose}
+          selectedVehicle={selectedVehicle}
+          onSave={updateNoteMutation.mutate}
+        />
+      )}
     </div>
   );
 }

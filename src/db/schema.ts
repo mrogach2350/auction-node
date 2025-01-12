@@ -1,4 +1,11 @@
-import { integer, pgTable, timestamp, text } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  timestamp,
+  text,
+  serial,
+  primaryKey,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const vehicles = pgTable("vehicles", {
@@ -22,6 +29,7 @@ export const vehicles = pgTable("vehicles", {
 
 export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
   offers: many(offers),
+  vehiclesToLists: many(vehiclesToLists),
   auction: one(auctions, {
     fields: [vehicles.auctionId],
     references: [auctions.id],
@@ -54,3 +62,40 @@ export const auctions = pgTable("auctions", {
 export const auctionsRelations = relations(auctions, ({ many }) => ({
   vehicles: many(vehicles),
 }));
+
+export const lists = pgTable("lists", {
+  id: serial("id").primaryKey(),
+  title: text().notNull().unique(),
+  description: text(),
+});
+
+export const listsRelations = relations(lists, ({ many }) => ({
+  vehiclesToLists: many(vehiclesToLists),
+}));
+
+export const vehiclesToLists = pgTable(
+  "vehicles_to_lists",
+  {
+    vehicleId: integer()
+      .notNull()
+      .references(() => vehicles.id),
+    listId: integer()
+      .notNull()
+      .references(() => lists.id),
+  },
+  (t) => [primaryKey({ columns: [t.vehicleId, t.listId] })]
+);
+
+export const vehiclesToListsRelations = relations(
+  vehiclesToLists,
+  ({ one }) => ({
+    vehicle: one(vehicles, {
+      fields: [vehiclesToLists.vehicleId],
+      references: [vehicles.id],
+    }),
+    list: one(lists, {
+      fields: [vehiclesToLists.listId],
+      references: [lists.id],
+    }),
+  })
+);
