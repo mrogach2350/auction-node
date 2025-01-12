@@ -85,16 +85,39 @@ export const bulkCreateVehicle = async (
     });
 };
 
-export const deleteVehicleById = async (vehicleId: number) => {
-  try {
-    await db
-      .update(vehicles)
-      .set({ deletedAt: new Date() })
-      .where(eq(vehicles.id, vehicleId));
-  } catch (e) {
-    console.log("error deleting vehicle record:", {
-      e,
-      vehicleId,
-    });
-  }
+export const deleteVehiclesById = async (vehicleIds: number[]) => {
+  const results = await Promise.all(
+    vehicleIds.map(async (vehicleId) => {
+      try {
+        return await db
+          .update(vehicles)
+          .set({ deletedAt: new Date() })
+          .where(eq(vehicles.id, vehicleId))
+          .returning({ id: vehicles.id });
+      } catch (e) {
+        console.log("error deleting vehicle record:", {
+          e,
+          vehicleId,
+        });
+      }
+    })
+  );
+  return results.map((result) => result && result[0]?.id);
+};
+
+export const reinstateVehiclesById = async (vehicleIds: number[]) => {
+  return vehicleIds.map(async (vehicleId) => {
+    try {
+      await db
+        .update(vehicles)
+        .set({ deletedAt: null })
+        .where(eq(vehicles.id, vehicleId))
+        .returning({ id: vehicles.id });
+    } catch (e) {
+      console.log("error reinstating vehicle record:", {
+        e,
+        vehicleId,
+      });
+    }
+  });
 };

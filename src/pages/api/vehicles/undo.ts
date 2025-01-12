@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getAllVehicles, deleteVehiclesById } from "@/db/interactions/vehicles";
+import { reinstateVehiclesById } from "@/db/interactions/vehicles";
 
 export default async function handler(
   req: NextApiRequest,
@@ -7,19 +7,14 @@ export default async function handler(
 ) {
   const METHOD = req.method;
   switch (METHOD) {
-    case "GET":
-      const vehicles = await getAllVehicles();
-      return res.json({
-        vehicles,
-      });
-    case "DELETE":
+    case "POST":
       const { vehicleIds = [] } = req.body;
 
       try {
-        const deleteVehicleIds = await deleteVehiclesById(vehicleIds);
+        const reinstatedVehicleIds = await reinstateVehiclesById(vehicleIds);
         return res.json({
           success: true,
-          deleteVehicleIds,
+          reinstatedVehicleIds,
         });
       } catch (error: any) {
         return res.json({

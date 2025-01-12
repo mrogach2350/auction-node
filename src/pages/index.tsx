@@ -4,7 +4,6 @@ import { getSelectorsByUserAgent } from "react-device-detect";
 import {
   useQuery,
   useQueryClient,
-  useMutation,
   QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
@@ -16,10 +15,15 @@ import {
   SelectionChangedEvent,
 } from "ag-grid-community";
 import NoteModal from "@/components/NoteModal";
+import MobileControls from "@/components/MobileControls";
+import DesktopControls from "@/components/DesktopControls";
 import { getColDefs } from "@/helpers";
 import { getAllVehiclesQuery } from "@/queries";
-import ListDropdown from "@/components/ListsDropdown";
-import AddToListDropDown from "@/components/AddToListDropdown";
+import {
+  useDeleteVehiclesMutation,
+  useGetOfferMutation,
+  useAuctionScraperMutation,
+} from "@/mutations";
 
 const myTheme = themeQuartz.withPart(colorSchemeDarkBlue);
 
@@ -27,12 +31,35 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
   const gridRef = useRef<AgGridReact<any>>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [scraperUrl, setScrapeUrl] = useState<string>("");
+  const getOfferMutation = useGetOfferMutation();
+  const deleteVehiclesMutation = useDeleteVehiclesMutation();
+  const auctionScraperMutation = useAuctionScraperMutation();
   const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
   const [showNoteModal, setShowNoteModal] = useState<boolean>(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any>({});
   const [gettingOfferId, setGettingOfferId] = useState<any>(null);
   const [selectedListId, setSelectedListId] = useState<number>(0);
+
+  const onGetOffer = (node: any) => {
+    const { vin, mileage, id } = node.data;
+    setGettingOfferId(id);
+    getOfferMutation.mutate(
+      { vin, mileage, id },
+      {
+        onSuccess: async (data) => {
+          queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+          // const { success, message = "" } = await data.json();
+          // if (!success) {
+          //   setScrapingError(message);
+          // } else {
+          //   setScrapingError("");
+          //   queryClient.invalidateQueries({ queryKey: ["vehicle"] });
+          // }
+        },
+        onSettled: () => setGettingOfferId(null),
+      }
+    );
+  };
 
   const colDefs: ColDef[] = getColDefs(({ node }: { node: any }) => {
     return (
@@ -51,10 +78,7 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
           Note
         </button>
         <button
-          onClick={() => {
-            const { vin, mileage, id } = node.data;
-            getOfferMutation.mutate({ vin, mileage, id });
-          }}
+          onClick={() => onGetOffer(node)}
           className="button is-info is-small">
           {getOfferMutation.isPending && gettingOfferId === node.data.id
             ? "Loading..."
@@ -86,115 +110,6 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
     }
   }, [selectedListId]);
 
-  const getOfferMutation = useMutation({
-    mutationFn: async ({ vin, mileage, id }: any) => {
-      setGettingOfferId(id);
-      return await fetch("/api/receive-offers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          vin,
-          mileage,
-          id,
-        }),
-      });
-    },
-    onSuccess: async (data) => {
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      // const { success, message = "" } = await data.json();
-      // if (!success) {
-      //   setScrapingError(message);
-      // } else {
-      //   setScrapingError("");
-      //   queryClient.invalidateQueries({ queryKey: ["vehicle"] });
-      // }
-    },
-    onSettled: () => setGettingOfferId(null),
-  });
-
-  const auctionScraperMutation = useMutation({
-    mutationFn: async () => {
-      await fetch("/api/receive-auctions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          auctionUrl: scraperUrl,
-        }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      setScrapeUrl("");
-    },
-  });
-
-  const deleteVehiclesMutation = useMutation({
-    mutationFn: async () => {
-      await fetch("/api/vehicles/delete-vehicles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          vehicleIds: selectedNodes.map((n) => n?.data?.id),
-        }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      setSelectedNodes([]);
-    },
-  });
-
-  const getAuctionBidsMutation = useMutation({
-    mutationFn: async () => {
-      const httpCalls = selectedNodes.map((node) => {
-        return fetch("/api/vehicles/get-bids", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            vehicleId: node?.data?.id,
-            auctionUrl: node?.data?.url,
-          }),
-        });
-      });
-      return await Promise.all(httpCalls);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      setSelectedNodes([]);
-    },
-  });
-
-  const updateNoteMutation = useMutation<
-    any,
-    unknown,
-    { id: number; note: string }
-  >({
-    mutationFn: async ({ id, note }) => {
-      await fetch("/api/vehicles/update-vehicles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id,
-          note,
-        }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      setShowNoteModal(false);
-    },
-  });
-
   const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
     const selectedNodes = event.api.getSelectedNodes();
     setSelectedNodes(selectedNodes);
@@ -203,16 +118,6 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
   const handleClose = () => {
     setSelectedVehicle({});
     setShowNoteModal(false);
-  };
-
-  const handleListChange = (id: any) => {
-    setSelectedListId(id);
-  };
-
-  const onAddVehicleToList = (listId: number) => {
-    gridRef?.current?.api.setFilterModel(null);
-    gridRef?.current?.api.deselectAll();
-    setSelectedListId(listId);
   };
 
   const showLoadingBar =
@@ -232,82 +137,30 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
       )}
       <h1 className="title">Vehicles</h1>
       {isMobile ? (
-        <div className="flex items-end mb-2 space-x-2">
-          <div>
-            <label htmlFor="scraperUrl" className="subtitle flex-none">
-              Scrape Url
-            </label>
-            <input
-              name="scraperUrl"
-              className="input"
-              value={scraperUrl}
-              onChange={(e) => setScrapeUrl(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={() => auctionScraperMutation.mutate()}
-            className="button is-primary"
-            disabled={!scraperUrl.trim() || auctionScraperMutation.isPending}>
-            {auctionScraperMutation.isPending ? "Loading..." : "Submit"}
-          </button>
-        </div>
+        <MobileControls
+          gridRef={gridRef}
+          selectedNodes={selectedNodes}
+          setSelectedNodes={setSelectedNodes}
+          selectedListId={selectedListId}
+          setSelectedListId={setSelectedListId}
+        />
       ) : (
-        <div className="flex space-x-2 w-1/2 items-baseline">
-          <label htmlFor="scraperUrl" className="subtitle flex-none">
-            Scrape Url
-          </label>
-          <input
-            name="scraperUrl"
-            className="input"
-            value={scraperUrl}
-            onChange={(e) => setScrapeUrl(e.target.value)}
-          />
-          <button
-            onClick={() => auctionScraperMutation.mutate()}
-            className="button is-primary"
-            disabled={!scraperUrl.trim() || auctionScraperMutation.isPending}>
-            {auctionScraperMutation.isPending ? "Loading..." : "Submit"}
-          </button>
-        </div>
+        <DesktopControls
+          gridRef={gridRef}
+          selectedNodes={selectedNodes}
+          setSelectedNodes={setSelectedNodes}
+          selectedListId={selectedListId}
+          setSelectedListId={setSelectedListId}
+        />
       )}
       <div className="h-5/6">
-        <div className="flex justify-between">
-          <ListDropdown
-            selectedListId={selectedListId}
-            onChange={handleListChange}
-          />
-          <div className="flex justify-end space-x-2 mb-2">
-            <AddToListDropDown
-              selectedVehicleNodes={selectedNodes}
-              onSave={onAddVehicleToList}
-            />
-            <button
-              className="button is-primary"
-              disabled={
-                !selectedNodes.length || getAuctionBidsMutation.isPending
-              }
-              onClick={() => getAuctionBidsMutation.mutate()}>
-              {getAuctionBidsMutation.isPending
-                ? "Loading..."
-                : "Get Bids for Selected Rows"}
-            </button>
-            <button
-              className="button is-danger"
-              disabled={
-                !selectedNodes.length || deleteVehiclesMutation.isPending
-              }
-              onClick={() => deleteVehiclesMutation.mutate()}>
-              {deleteVehiclesMutation.isPending ? "Loading..." : "Delete"}
-            </button>
-          </div>
-        </div>
         <AgGridReact
           ref={gridRef}
           pagination
           className="h-full pb-5"
           rowSelection={{
             mode: "multiRow",
-            selectAll: "filtered",
+            selectAll: "currentPage",
           }}
           theme={myTheme}
           columnDefs={colDefs}
@@ -327,7 +180,10 @@ export default function Home({ isMobile }: { isMobile: boolean }) {
         <NoteModal
           onClose={handleClose}
           selectedVehicle={selectedVehicle}
-          onSave={updateNoteMutation.mutate}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+            setShowNoteModal(false);
+          }}
         />
       )}
     </div>
