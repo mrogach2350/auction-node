@@ -6,7 +6,6 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const { id, note } = req.body;
-  console.log("handler", { id, note });
 
   try {
     await updateVehicle({ id, note });
