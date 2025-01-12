@@ -37,13 +37,11 @@ export const getListById = async (id: number) => {
 };
 
 export const createList = async (list: any) => {
-  await db
-    .insert(lists)
-    .values(list)
-    .onConflictDoNothing({
-      target: list.title,
-    })
-    .returning({ id: lists.id });
+  try {
+    return await db.insert(lists).values(list).returning({ id: lists.id });
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 export const addVehicleToList = async (listId: number, vehicleId: number) => {

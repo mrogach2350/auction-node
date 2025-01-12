@@ -65,7 +65,7 @@ export const auctionsRelations = relations(auctions, ({ many }) => ({
 
 export const lists = pgTable("lists", {
   id: serial("id").primaryKey(),
-  title: text().notNull(),
+  title: text().notNull().unique(),
   description: text(),
 });
 
